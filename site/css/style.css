@@ -473,3 +473,28 @@ footer .sp { margin-left: auto; }
 
 [hidden] { display: none !important; }
 .pb-steps .eq b { color: var(--accent, var(--ink)); font-weight: 600; background: color-mix(in srgb, currentColor 10%, transparent); border-radius: 6px; padding: .05em .35em; }
+
+/* 04 — grafice în probleme */
+.pb-fig { margin: 0 0 18px; padding: 10px 12px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); max-width: 600px; }
+.pb-fig.sm { max-width: 440px; margin: 8px 0; }
+.pb-fig svg { display: block; width: 100%; height: auto; font-family: var(--f-body); }
+.pb-fig .g { stroke: var(--grid); stroke-width: 1; }
+.pb-fig .ax { stroke: var(--ink-2); stroke-width: 1.2; }
+.pb-fig .ah { fill: var(--ink-2); }
+.pb-fig .gd { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.pb-fig .ar { fill: var(--c-v); opacity: .18; }
+.pb-fig .ln { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.pb-fig .ln.s1 { stroke: var(--c-v); }
+.pb-fig .ln.s2 { stroke: var(--c-x); }
+.pb-fig .pt { stroke: var(--card); stroke-width: 2; fill: var(--ink); }
+.pb-fig .pt.s1 { fill: var(--c-v); }
+.pb-fig .pt.s2 { fill: var(--c-x); }
+.pb-fig .pt.hole { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
+.pb-fig text { fill: var(--ink-2); font-size: 12px; }
+.pb-fig .tt { fill: var(--ink); font-size: 13px; font-style: italic; font-family: var(--f-display); }
+.pb-fig .lb { fill: var(--ink); font-size: 13px; font-weight: 600; }
+.pb-fig figcaption { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .85rem; color: var(--ink-2); padding: 4px 4px 0; }
+.pb-fig .lg i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; background: var(--c-v); }
+.pb-fig .lg i.s2 { background: var(--c-x); }
+.pb-fig .lg i.hole { width: 9px; height: 9px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); }
+.rad { border-top: 1px solid currentColor; padding: 0 .12em; margin-left: 1px; }

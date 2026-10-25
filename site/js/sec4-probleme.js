@@ -17,6 +17,31 @@
   const eq = (h) => `<div class="eq">${h}</div>`;
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   const vm = sub('v', 'm'), v0 = sub('v', '0'), x0 = sub('x', '0');
+  const sq = (h) => `√<span class="rad">${h}</span>`;
+  const sup2 = '<sup>2</sup>';
+
+  /* ---------- grafic SVG simplu: grilă, axe, serii, puncte citite cu ghidaje punctate ---------- */
+  function graph(o) {
+    const nw = window.innerWidth < 640, W = nw ? (o.small ? 340 : 380) : o.w || 560, H = nw ? 230 : o.h || 260, l = 50, r = 26, t = 24, b = 34;
+    const X = (x) => (l + (x / o.tMax) * (W - l - r)).toFixed(1);
+    const Y = (y) => (H - b - ((y - o.yMin) / (o.yMax - o.yMin)) * (H - t - b)).toFixed(1);
+    let s = `<defs><clipPath id="${o.id}-c"><rect x="${l}" y="${t - 6}" width="${W - l - r + 2}" height="${H - t - b + 6}"/></clipPath></defs>`;
+    for (let x = o.tStep; x <= o.tMax + 1e-9; x += o.tStep) s += `<line class="g" x1="${X(x)}" x2="${X(x)}" y1="${t}" y2="${H - b}"/>`;
+    for (let y = o.yMin + o.yStep; y <= o.yMax + 1e-9; y += o.yStep) s += `<line class="g" x1="${l}" x2="${W - r}" y1="${Y(y)}" y2="${Y(y)}"/>`;
+    if (o.area) s += `<polygon class="ar" points="${o.area.map(([x, y]) => X(x) + ',' + Y(y)).join(' ')}"/>`;
+    (o.guides || []).forEach(([x, y]) => (s += `<polyline class="gd" points="${X(x)},${Y(0)} ${X(x)},${Y(y)} ${l},${Y(y)}"/>`));
+    const y0 = Y(0), xe = W - r + 12;
+    s += `<line class="ax" x1="${l}" x2="${xe}" y1="${y0}" y2="${y0}"/><path class="ah" d="M${xe} ${y0}l-7 -3.5v7z"/>`;
+    s += `<line class="ax" x1="${l}" x2="${l}" y1="${H - b}" y2="${t - 14}"/><path class="ah" d="M${l} ${t - 14}l-3.5 7h7z"/>`;
+    (o.tLabels || []).forEach((x) => (s += `<text x="${X(x)}" y="${H - b + 17}" text-anchor="middle">${n(x)}</text>`));
+    (o.yLabels || []).forEach((y) => (s += `<text x="${l - 8}" y="${Y(y)}" dy=".35em" text-anchor="end">${n(y)}</text>`));
+    s += `<text class="tt" x="${xe}" y="${+y0 - 9}" text-anchor="end">t (s)</text><text class="tt" x="${l + 9}" y="${t - 6}">${o.yTitle}</text>`;
+    o.series.forEach((se) => (s += `<polyline class="ln ${se.cls}" clip-path="url(#${o.id}-c)" points="${se.pts.map(([x, y]) => X(x) + ',' + Y(y)).join(' ')}"/>`));
+    (o.labels || []).forEach(([x, y, txt, dx, dy]) => (s += `<text class="lb" x="${+X(x) + (dx || 0)}" y="${+Y(y) + (dy || 0)}" text-anchor="middle">${txt}</text>`));
+    (o.points || []).forEach(([x, y, cls]) => (s += `<circle class="pt ${cls || ''}" cx="${X(x)}" cy="${Y(y)}" r="4.5"/>`));
+    const leg = o.legend ? `<figcaption>${o.legend.map(([c, txt]) => `<span class="lg"><i class="${c}"></i>${txt}</span>`).join('')}</figcaption>` : '';
+    return `<figure class="pb-fig${o.small ? ' sm' : ''}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria}">${s}</svg>${leg}</figure>`;
+  }
 
   /* ---------- problemele ----------
      Fiecare: base (valorile din enunțul „de manual”), gen() (valori noi),
@@ -268,7 +293,243 @@
         return [{ l: sub('t', 'opr'), u: 's', v: p.u0 / p.a }, { l: 'Δ' + V('x'), u: 'm', v: dx }, { l: V('d'), u: 'm', v: d1 + d2, trap: [[dx, 'Aceasta este deplasarea. Mobilul s-a întors, deci distanța parcursă este mai mare: adună drumul de dus și drumul de întors.']] }];
       },
     },
+
+    /* ----- grafice ----- */
+    {
+      id: 'grafic-xt', cat: 'mru', lvl: 2, title: 'Citirea graficului x(t): două mobile',
+      base: { v1: 3, v2: 2, ti: 6, tr: 2 },
+      gen: () => {
+        for (;;) {
+          const v1 = pick([2, 3, 4, 5]), v2 = pick([1, 2, 3, 4]), ti = pick([4, 5, 6, 8]), D = (v1 + v2) * ti;
+          if (D > 60 || D < 15) continue;
+          // momentul de citire: valorile citite să nu se suprapună pe axa x
+          const tr = [2, 3, 4].filter((r) => r < ti).find((r) => {
+            const ys = [0, v1 * r, D - v2 * r, D].sort((a, b) => a - b);
+            return ys.every((y, k) => !k || y - ys[k - 1] >= 0.13 * D);
+          });
+          if (tr) return { v1, v2, ti, tr };
+        }
+      },
+      fig: (p) => {
+        const D = (p.v1 + p.v2) * p.ti, tMax = Math.ceil(p.ti * 1.5), st = D > 40 ? 10 : 5;
+        const x1 = p.v1 * p.tr, x2 = D - p.v2 * p.tr;
+        return graph({
+          id: 'gxt', aria: 'Graficul coordonatei în funcție de timp pentru două mobile', yTitle: 'x (m)',
+          tMax, tStep: 1, yMin: 0, yMax: Math.ceil(D / st) * st, yStep: st,
+          tLabels: Array.from({ length: tMax + 1 }, (_, k) => k), yLabels: [0, x1, x2, D],
+          guides: [[p.tr, x1], [p.tr, x2]],
+          series: [{ cls: 's1', pts: [[0, 0], [tMax, p.v1 * tMax]] }, { cls: 's2', pts: [[0, D], [tMax, D - p.v2 * tMax]] }],
+          points: [[0, 0, 's1'], [p.tr, x1, 's1'], [0, D, 's2'], [p.tr, x2, 's2'], [p.ti, p.v1 * p.ti, 'hole']],
+          labels: [[p.tr, x1, '(1)', -16, -6], [p.tr, x2, '(2)', -16, -6]],
+          legend: [['s1', 'mobilul (1)'], ['s2', 'mobilul (2)'], ['hole', 'punctul de întâlnire']],
+        });
+      },
+      text: () => `Graficul de mai jos arată cum variază coordonata a două mobile, (1) și (2), care se mișcă rectiliniu uniform pe aceeași axă. Citește de pe grafic datele necesare și află vitezele celor două mobile (cu semn), apoi momentul și locul întâlnirii lor.`,
+      data: () => [[`${V('x')}(${V('t')})`, 'graficul din figură']],
+      ask: () => [sub('v', '1'), sub('v', '2'), sub('t', 'î'), sub('x', 'î')],
+      steps: (p) => {
+        const D = (p.v1 + p.v2) * p.ti, x1 = p.v1 * p.tr, x2 = D - p.v2 * p.tr;
+        return [
+          ['Citim graficul', `La ${V('t')} = 0: ${sub('x', '01')} = 0 m și ${sub('x', '02')} = ${n(D)} m.<br>La ${V('t')} = ${p.tr} s: ${sub('x', '1')} = ${n(x1)} m și ${sub('x', '2')} = ${n(x2)} m.`],
+          ['Viteza mobilului (1)', `Graficul x(t) al unei mișcări uniforme este o dreaptă; viteza este panta ei:` + eq(`${sub('v', '1')} = ${fr('Δ' + V('x'), 'Δ' + V('t'))} = ${fr(n(x1) + ' − 0', p.tr + ' − 0')} = <b>${n(p.v1)} m/s</b>`)],
+          ['Viteza mobilului (2)', eq(`${sub('v', '2')} = ${fr(n(x2) + ' − ' + n(D), p.tr + ' − 0')} = <b>${n(-p.v2)} m/s</b>`) + `Semnul minus arată că coordonata scade: mobilul (2) se mișcă în sensul negativ al axei, spre mobilul (1).`],
+          ['Legile de mișcare și întâlnirea', eq(`${sub('x', '1')} = ${n(p.v1)}${V('t')}, &nbsp;&nbsp; ${sub('x', '2')} = ${n(D)} − ${n(p.v2)}${V('t')}`) + eq(`${sub('x', '1')} = ${sub('x', '2')} ⇒ ${n(p.v1 + p.v2)}${V('t')} = ${n(D)} ⇒ ${sub('t', 'î')} = <b>${n(p.ti)} s</b>`)],
+          ['Locul întâlnirii', eq(`${sub('x', 'î')} = ${n(p.v1)}·${n(p.ti)} = <b>${n(p.v1 * p.ti)} m</b>`) + `Pe grafic, întâlnirea este punctul în care cele două drepte se intersectează.`],
+        ];
+      },
+      ans: (p) => [{ l: sub('v', '1'), u: 'm/s', v: p.v1 }, { l: sub('v', '2'), u: 'm/s', v: -p.v2 }, { l: sub('t', 'î'), u: 's', v: p.ti }, { l: sub('x', 'î'), u: 'm', v: p.v1 * p.ti }],
+    },
+    {
+      id: 'grafic-vt', cat: 'mruv', lvl: 2, title: 'Citirea graficului v(t): între două semafoare',
+      base: { V: 12, t1: 4, t2: 10, t3: 6 },
+      gen: () => ({ V: pick([10, 12, 15, 20]), t1: pick([2, 4, 5]), t2: pick([6, 8, 10]), t3: pick([2, 4, 5, 6]) }),
+      fig: (p) => vtFig(p, false),
+      text: () => `Graficul de mai jos arată cum variază viteza unui automobil care pleacă de la un semafor și se oprește la semaforul următor. Citește graficul și află accelerația la pornire, accelerația la frânare, distanța dintre cele două semafoare și viteza medie a automobilului.`,
+      data: () => [[`${V('v')}(${V('t')})`, 'graficul din figură']],
+      ask: () => [sub('a', '1') + ' (pornire)', sub('a', '3') + ' (frânare)', V('d'), vm],
+      steps: (p) => {
+        const T = p.t1 + p.t2 + p.t3, d = p.V * (p.t1 / 2 + p.t2 + p.t3 / 2);
+        return [
+          ['Citim graficul', `Trei etape: accelerare de la 0 la ${n(p.V)} m/s în ${p.t1} s, mișcare uniformă cu ${n(p.V)} m/s timp de ${p.t2} s (de la ${p.t1} s la ${p.t1 + p.t2} s), apoi frânare până la oprire în ${p.t3} s (până la ${T} s).`],
+          ['Accelerația la pornire', `Accelerația este panta graficului v(t):` + eq(`${sub('a', '1')} = ${fr('Δ' + V('v'), 'Δ' + V('t'))} = ${fr(n(p.V) + ' − 0', p.t1 + ' − 0')} = <b>${n(p.V / p.t1)} m/s²</b>`)],
+          ['Accelerația la frânare', eq(`${sub('a', '3')} = ${fr('0 − ' + n(p.V), T + ' − ' + (p.t1 + p.t2))} = <b>${n(-p.V / p.t3)} m/s²</b>`) + `Negativă: viteza scade. Pe porțiunea orizontală, accelerația este 0.`],
+          ['Distanța = aria de sub grafic', `Aria dintre graficul v(t) și axa timpului este distanța parcursă. Aici aria este un trapez:` + vtFig(p, true) + eq(`${V('d')} = ${fr('(' + T + ' + ' + p.t2 + ')·' + n(p.V), '2')} = <b>${n(d)} m</b>`)],
+          ['Viteza medie', eq(`${vm} = ${fr(V('d'), 'Δ' + V('t'))} = ${fr(n(d), String(T))} = <b>${n(d / T)} m/s</b>`) + `Este mai mică decât viteza maximă, pentru că o parte din timp automobilul a mers mai încet.`],
+        ];
+      },
+      ans: (p) => {
+        const T = p.t1 + p.t2 + p.t3, d = p.V * (p.t1 / 2 + p.t2 + p.t3 / 2);
+        return [
+          { l: sub('a', '1'), u: 'm/s²', v: p.V / p.t1 },
+          { l: sub('a', '3'), u: 'm/s²', v: -p.V / p.t3 },
+          { l: V('d'), u: 'm', v: d, trap: [[p.V * T, 'Ai calculat aria unui dreptunghi. Pe porțiunile de accelerare și frânare aria de sub grafic este un triunghi (jumătate din dreptunghi).'], [p.V * p.t2, 'Ai luat doar porțiunea uniformă. Automobilul parcurge distanță și cât accelerează și cât frânează.']] },
+          { l: vm, u: 'm/s', v: d / T, trap: [[p.V / 2, 'Viteza medie nu este media dintre 0 și viteza maximă. Calculează distanța totală împărțită la timpul total.']] },
+        ];
+      },
+    },
+
+    /* ----- ecuația lui Galilei folosită „invers” ----- */
+    {
+      id: 'expertiza', cat: 'mruv', lvl: 2, title: 'Urmele de frânare: ce viteză avea mașina?',
+      base: { u: 15, a: 5 },
+      gen: () => {
+        for (;;) {
+          const u = pick([10, 12.5, 15, 17.5, 20, 25]), a = pick([4, 5, 6, 8]), d = (u * u) / (2 * a);
+          if (Math.abs(d * 10 - Math.round(d * 10)) < 1e-9) return { u, a };
+        }
+      },
+      text: (p) => `Un automobil frânează brusc pe o stradă dintr-o localitate, unde viteza maximă admisă este 50 km/h, și lasă pe asfalt urme de frânare lungi de <b>${n((p.u * p.u) / (2 * p.a))} m</b>. Expertiza arată că, pe acest asfalt, frânarea are loc cu o accelerație de modul <b>${n(p.a)} m/s²</b>. Ce viteză avea automobilul la începutul frânării? A depășit limita legală? Cât a durat frânarea?`,
+      data: (p) => [[V('d'), n((p.u * p.u) / (2 * p.a)) + ' m'], [V('a'), '−' + n(p.a) + ' m/s²'], [V('v'), '0 (oprire)']],
+      ask: () => [v0 + ' (m/s)', v0 + ' (km/h)', 'Δ' + V('t')],
+      steps: (p) => {
+        const d = (p.u * p.u) / (2 * p.a), kmh = p.u * 3.6;
+        return [
+          ['Alegem formula', `Cunoaștem distanța, accelerația și viteza finală (zero), dar nu și timpul. Ecuația lui Galilei leagă exact aceste mărimi:` + eq(`${V('v')}${sup2} = ${v0}${sup2} + 2${V('a')}${V('d')}`)],
+          ['Scoatem viteza inițială', `Cu ${V('v')} = 0 și ${V('a')} = −${n(p.a)} m/s²:` + eq(`0 = ${v0}${sup2} − 2|${V('a')}|${V('d')} ⇒ ${v0} = ${sq('2|' + V('a') + '|' + V('d'))}`)],
+          ['Calcul numeric', eq(`${v0} = ${sq('2·' + n(p.a) + '·' + n(d))} = ${sq(n(2 * p.a * d))} = <b>${n(p.u)} m/s</b>`)],
+          ['În km/h și concluzia', eq(`${v0} = ${n(p.u)}·3,6 = <b>${n(kmh)} km/h</b>`) + (kmh > 50 ? `Mai mult de 50 km/h: șoferul <b>a depășit</b> limita legală.` : `Cel mult 50 km/h: șoferul <b>a respectat</b> limita legală.`)],
+          ['Durata frânării', eq(`0 = ${v0} − |${V('a')}|·Δ${V('t')} ⇒ Δ${V('t')} = ${fr(v0, '|' + V('a') + '|')} = ${fr(n(p.u), n(p.a))} = <b>${n(p.u / p.a)} s</b>`)],
+        ];
+      },
+      ans: (p) => {
+        const d = (p.u * p.u) / (2 * p.a);
+        const tr = [[2 * p.a * d, `Ai uitat să extragi radicalul: ${n(2 * p.a * d)} este ${'v'}<sub>0</sub>², nu ${'v'}<sub>0</sub>.`], [Math.sqrt(p.a * d), 'Ai uitat factorul 2 din ecuația lui Galilei.']];
+        return [{ l: v0, u: 'm/s', v: p.u, trap: tr }, { l: v0, u: 'km/h', v: p.u * 3.6 }, { l: 'Δ' + V('t'), u: 's', v: p.u / p.a }];
+      },
+    },
+    {
+      id: 'decolare', cat: 'mruv', lvl: 3, title: 'Decolarea: viteza la jumătatea pistei',
+      base: { vk: 252, d: 1750 },
+      gen: () => ({ vk: pick([216, 234, 252, 270, 288]), d: pick([1200, 1500, 1600, 1800, 2000]) }),
+      text: (p) => `Un avion pornește din repaus și accelerează uniform pe pistă. Pentru decolare are nevoie de viteza de <b>${n(p.vk)} km/h</b>, pe care o atinge exact la capătul pistei, lungă de <b>${n(p.d)} m</b>. Află accelerația avionului, ce viteză are la jumătatea pistei și după cât timp ajunge la jumătatea pistei.`,
+      data: (p) => [[v0, '0'], [V('v'), n(p.vk) + ' km/h'], [V('d'), n(p.d) + ' m']],
+      ask: () => [V('a'), sub('v', 'mij'), sub('t', 'mij')],
+      steps: (p) => {
+        const u = p.vk / 3.6, a = (u * u) / (2 * p.d), T = u / a;
+        return [
+          ['Viteza în m/s', eq(`${V('v')} = ${fr(n(p.vk), '3,6')} = ${n(u)} m/s`)],
+          ['Accelerația, din ecuația lui Galilei', `Pornind din repaus, ${V('v')}${sup2} = 2${V('a')}${V('d')}, deci:` + eq(`${V('a')} = ${fr(V('v') + sup2, '2' + V('d'))} = ${fr(n(u) + sup2, '2·' + n(p.d))} = <b>${n(a)} m/s²</b>`)],
+          ['Viteza la jumătatea pistei', `Aplicăm din nou ecuația lui Galilei, pentru distanța ${fr(V('d'), '2')}:` + eq(`${sub('v', 'mij')}${sup2} = 2${V('a')}·${fr(V('d'), '2')} = ${fr(V('v') + sup2, '2')} ⇒ ${sub('v', 'mij')} = ${fr(V('v'), sq('2'))} = ${fr(n(u), '1,414')} = <b>${n(u / Math.SQRT2)} m/s</b>`) + `Adică aproximativ ${n((p.vk / Math.SQRT2))} km/h, nu jumătate din viteza de decolare.`],
+          ['Timpul până la jumătatea pistei', eq(`${fr(V('d'), '2')} = ${fr(V('a') + sub('t', 'mij') + sup2, '2')} ⇒ ${sub('t', 'mij')} = ${sq(fr(V('d'), V('a')))} = ${sq(fr(n(p.d), n(a)))} = <b>${n(Math.sqrt(p.d / a))} s</b>`) + `Toată rularea durează ${V('t')} = ${fr(V('v'), V('a'))} = ${n(T)} s, deci ${sub('t', 'mij')} = ${fr(V('t'), sq('2'))}.`],
+          ['Interpretare', `La jumătatea pistei avionul a consumat circa 71% din timp, dar are doar circa 71% din viteză: prima jumătate a pistei este parcursă mai încet decât a doua.`],
+        ];
+      },
+      ans: (p) => {
+        const u = p.vk / 3.6, a = (u * u) / (2 * p.d), T = u / a;
+        return [
+          { l: V('a'), u: 'm/s²', v: a, trap: [[(p.vk * p.vk) / (2 * p.d), 'Ai folosit viteza în km/h. Transformă-o mai întâi în m/s.']] },
+          { l: sub('v', 'mij'), u: 'm/s', v: u / Math.SQRT2, trap: [[u / 2, 'Viteza crește proporțional cu timpul, nu cu distanța. Folosește ecuația lui Galilei pentru jumătate din distanță.']] },
+          { l: sub('t', 'mij'), u: 's', v: T / Math.SQRT2, trap: [[T / 2, 'Avionul nu parcurge jumătate din pistă în jumătate din timp: la început merge mai încet.']] },
+        ];
+      },
+    },
+
+    /* ----- aruncarea pe verticală, cu revenire ----- */
+    {
+      id: 'doua-inaltimi', cat: 'mruv', lvl: 3, title: 'De două ori la aceeași înălțime',
+      base: { t1: 1, t2: 3 },
+      gen: () => pick([{ t1: 1, t2: 3 }, { t1: 1, t2: 4 }, { t1: 2, t2: 3 }, { t1: 1, t2: 5 }, { t1: 2, t2: 4 }, { t1: 2, t2: 5 }]),
+      text: (p) => `O piatră este aruncată vertical în sus, de la nivelul solului, cu viteza de <b>${n(5 * (p.t1 + p.t2))} m/s</b>. Neglijând frecarea cu aerul (${V('g')} = 10 m/s²), află la ce momente se află piatra la înălțimea de <b>${n(5 * p.t1 * p.t2)} m</b> și ce viteză (în modul) are în aceste momente.`,
+      data: (p) => [[v0, n(5 * (p.t1 + p.t2)) + ' m/s'], [V('h'), n(5 * p.t1 * p.t2) + ' m'], [V('g'), '10 m/s²']],
+      ask: () => [sub('t', '1') + ' (la urcare)', sub('t', '2') + ' (la coborâre)', '|' + V('v') + '|'],
+      steps: (p) => {
+        const u0 = 5 * (p.t1 + p.t2), h = 5 * p.t1 * p.t2, s = p.t1 + p.t2, P2 = p.t1 * p.t2;
+        return [
+          ['Legea mișcării', `Axa ${V('Oy')} vertical în sus, originea pe sol:` + eq(`${V('y')} = ${v0}${V('t')} − ${fr(V('g') + V('t') + sup2, '2')} = ${n(u0)}${V('t')} − 5${V('t')}${sup2}`)],
+          ['Ecuația de gradul al II-lea', `Punem condiția ${V('y')} = ${n(h)} m și împărțim la 5:` + eq(`${n(u0)}${V('t')} − 5${V('t')}${sup2} = ${n(h)} ⇒ ${V('t')}${sup2} − ${s}${V('t')} + ${P2} = 0`) + eq(`Δ = ${s}${sup2} − 4·${P2} = ${s * s - 4 * P2}`)],
+          ['Cele două soluții', eq(`${V('t')} = ${fr(s + ' ± ' + sq(String(s * s - 4 * P2)), '2')} ⇒ ${sub('t', '1')} = <b>${p.t1} s</b>, &nbsp; ${sub('t', '2')} = <b>${p.t2} s</b>`) + `Ambele au sens fizic: piatra trece o dată prin această înălțime la urcare și încă o dată la coborâre.`],
+          ['Vitezele în cele două momente', eq(`${V('v')}(${p.t1}) = ${n(u0)} − 10·${p.t1} = ${n(u0 - 10 * p.t1)} m/s, &nbsp;&nbsp; ${V('v')}(${p.t2}) = ${n(u0)} − 10·${p.t2} = ${n(u0 - 10 * p.t2)} m/s`) + `Același modul, <b>${n(u0 - 10 * p.t1)} m/s</b>, cu sensuri opuse. Verificare cu ecuația lui Galilei:` + eq(`${V('v')}${sup2} = ${v0}${sup2} − 2${V('g')}${V('h')} = ${n(u0 * u0)} − ${n(20 * h)} = ${n(u0 * u0 - 20 * h)} &nbsp;✓`)],
+          ['Simetria mișcării', `Piatra ajunge sus la ${sub('t', 'u')} = ${fr(v0, V('g'))} = ${n(u0 / 10)} s, exact la mijloc între ${p.t1} s și ${p.t2} s. Iar ${sub('t', '1')} + ${sub('t', '2')} = ${s} s este chiar durata totală a zborului, ${fr('2' + v0, V('g'))}.`],
+        ];
+      },
+      ans: (p) => [
+        { l: sub('t', '1'), u: 's', v: p.t1, trap: [[p.t2, 'Acesta este momentul de la coborâre. Primul câmp cere momentul de la urcare (cel mai mic).']] },
+        { l: sub('t', '2'), u: 's', v: p.t2, trap: [[p.t1, 'Acesta este momentul de la urcare. Al doilea câmp cere momentul de la coborâre.']] },
+        { l: '|' + V('v') + '|', u: 'm/s', v: 5 * (p.t2 - p.t1) },
+      ],
+    },
+    {
+      id: 'balcon', cat: 'mruv', lvl: 3, title: 'Mingea aruncată în sus de pe balcon',
+      base: { u0: 10, T: 3 },
+      gen: () => pick([{ u0: 5, T: 2 }, { u0: 5, T: 3 }, { u0: 10, T: 3 }, { u0: 10, T: 4 }, { u0: 15, T: 4 }, { u0: 15, T: 5 }, { u0: 20, T: 5 }, { u0: 20, T: 6 }]),
+      text: (p) => `De pe un balcon aflat la înălțimea de <b>${n(5 * p.T * p.T - p.u0 * p.T)} m</b> față de sol, o minge este aruncată vertical în sus cu viteza de <b>${n(p.u0)} m/s</b>. Neglijând frecarea cu aerul (${V('g')} = 10 m/s²), află: după cât timp trece mingea din nou prin dreptul balconului, la ce înălțime maximă față de sol urcă, după cât timp atinge solul și cu ce viteză (în modul) lovește solul.`,
+      data: (p) => [[sub('h', '0'), n(5 * p.T * p.T - p.u0 * p.T) + ' m'], [v0, n(p.u0) + ' m/s'], [V('g'), '10 m/s²']],
+      ask: () => [sub('t', 'rev') + ' (din nou la balcon)', sub('h', 'max') + ' (față de sol)', sub('t', 'sol'), '|' + sub('v', 'sol') + '|'],
+      steps: (p) => {
+        const h0 = 5 * p.T * p.T - p.u0 * p.T, hu = (p.u0 * p.u0) / 20, R = Math.sqrt(p.u0 * p.u0 + 20 * h0);
+        return [
+          ['Axa și legile mișcării', `Axa ${V('Oy')} vertical în sus, cu originea <b>pe sol</b>, ${V('t')} = 0 la aruncare:` + eq(`${V('y')} = ${sub('h', '0')} + ${v0}${V('t')} − ${fr(V('g') + V('t') + sup2, '2')} = ${n(h0)} + ${n(p.u0)}${V('t')} − 5${V('t')}${sup2}, &nbsp;&nbsp; ${V('v')} = ${n(p.u0)} − 10${V('t')}`)],
+          ['Revenirea în dreptul balconului', `Punem ${V('y')} = ${sub('h', '0')}:` + eq(`${n(p.u0)}${V('t')} − 5${V('t')}${sup2} = 0 ⇒ ${sub('t', 'rev')} = ${fr('2' + v0, V('g'))} = <b>${n(p.u0 / 5)} s</b>`) + `În acel moment mingea are viteza −${n(p.u0)} m/s: același modul ca la aruncare, dar în jos.`],
+          ['Înălțimea maximă', `Deasupra balconului mingea mai urcă:` + eq(`${V('h')} = ${fr(v0 + sup2, '2' + V('g'))} = ${fr(n(p.u0) + sup2, '20')} = ${n(hu)} m ⇒ ${sub('h', 'max')} = ${n(h0)} + ${n(hu)} = <b>${n(h0 + hu)} m</b>`)],
+          ['Momentul atingerii solului', `Pe sol ${V('y')} = 0:` + eq(`5${V('t')}${sup2} − ${n(p.u0)}${V('t')} − ${n(h0)} = 0 ⇒ ${V('t')} = ${fr(n(p.u0) + ' + ' + sq(n(p.u0) + sup2 + ' + 20·' + n(h0)), '10')} = ${fr(n(p.u0) + ' + ' + n(R), '10')} = <b>${n(p.T)} s</b>`) + `Cealaltă soluție a ecuației este negativă, deci nu are sens fizic.`],
+          ['Viteza la sol', eq(`${sub('v', 'sol')} = ${n(p.u0)} − 10·${n(p.T)} = ${n(p.u0 - 10 * p.T)} m/s ⇒ |${sub('v', 'sol')}| = <b>${n(10 * p.T - p.u0)} m/s</b>`) + `Verificare cu ecuația lui Galilei, de la aruncare până la sol:` + eq(`${sub('v', 'sol')}${sup2} = ${v0}${sup2} + 2${V('g')}${sub('h', '0')} = ${n(p.u0 * p.u0)} + ${n(20 * h0)} = ${n(R * R)} &nbsp;✓`)],
+        ];
+      },
+      ans: (p) => {
+        const h0 = 5 * p.T * p.T - p.u0 * p.T, hu = (p.u0 * p.u0) / 20;
+        return [
+          { l: sub('t', 'rev'), u: 's', v: p.u0 / 5, trap: [[p.u0 / 10, 'Acesta este doar timpul de urcare. Mingea mai are nevoie de același timp ca să coboare până la balcon.']] },
+          { l: sub('h', 'max'), u: 'm', v: h0 + hu, trap: [[hu, 'Aceasta este înălțimea urcată deasupra balconului. Adaugă și înălțimea balconului.']] },
+          { l: sub('t', 'sol'), u: 's', v: p.T, trap: [[Math.sqrt((h0 + hu) / 5), 'Acesta este doar timpul de cădere din punctul cel mai înalt. Adaugă timpul de urcare.']] },
+          { l: '|' + sub('v', 'sol') + '|', u: 'm/s', v: 10 * p.T - p.u0 },
+        ];
+      },
+    },
+
+    /* ----- întâlnire în MRUV ----- */
+    {
+      id: 'intalnire-mruv', cat: 'mruv', lvl: 3, title: 'Întâlnirea a două mobile accelerate',
+      base: { a1: 2, a2: 1, t: 10 },
+      gen: () => {
+        const a1 = pick([0.5, 1, 1.5, 2, 2.5, 3]);
+        return { a1, a2: pick([0.5, 1, 1.5, 2, 2.5, 3].filter((a) => a !== a1)), t: pick([4, 5, 6, 8, 10]) };
+      },
+      text: (p) => `Două mobile pornesc simultan din repaus, unul spre celălalt, din punctele A și B aflate la distanța de <b>${n(((p.a1 + p.a2) * p.t * p.t) / 2)} m</b>. Mobilul din A are accelerația de <b>${n(p.a1)} m/s²</b>, iar cel din B, de <b>${n(p.a2)} m/s²</b>. Alegând axa de la A spre B, află după cât timp se întâlnesc, la ce distanță de A și ce viteze au (cu semn) în acel moment.`,
+      data: (p) => [[V('D'), n(((p.a1 + p.a2) * p.t * p.t) / 2) + ' m'], [sub('a', 'A'), n(p.a1) + ' m/s²'], [sub('a', 'B'), n(p.a2) + ' m/s² (spre A)'], [sub('v', '0'), '0 (ambele)']],
+      ask: () => [sub('t', 'î'), sub('x', 'î') + ' (față de A)', sub('v', 'A'), sub('v', 'B')],
+      steps: (p) => {
+        const D = ((p.a1 + p.a2) * p.t * p.t) / 2;
+        return [
+          ['Sistemul de referință', `Originea în A, axa de la A spre B, ${V('t')} = 0 la plecare. Mobilul din B accelerează spre A, adică în sens negativ: accelerația lui este −${n(p.a2)} m/s².`],
+          ['Legile de mișcare', eq(`${sub('x', 'A')} = ${fr(sub('a', 'A') + V('t') + sup2, '2')} = ${n(p.a1 / 2)}${V('t')}${sup2}, &nbsp;&nbsp; ${sub('x', 'B')} = ${V('D')} − ${fr(sub('a', 'B') + V('t') + sup2, '2')} = ${n(D)} − ${n(p.a2 / 2)}${V('t')}${sup2}`)],
+          ['Condiția de întâlnire', eq(`${sub('x', 'A')} = ${sub('x', 'B')} ⇒ ${fr('(' + sub('a', 'A') + ' + ' + sub('a', 'B') + ')' + V('t') + sup2, '2')} = ${V('D')} ⇒ ${sub('t', 'î')} = ${sq(fr('2' + V('D'), sub('a', 'A') + ' + ' + sub('a', 'B')))}`) + eq(`${sub('t', 'î')} = ${sq(fr('2·' + n(D), n(p.a1 + p.a2)))} = ${sq(n(p.t * p.t))} = <b>${n(p.t)} s</b>`)],
+          ['Locul întâlnirii', eq(`${sub('x', 'î')} = ${n(p.a1 / 2)}·${n(p.t)}${sup2} = <b>${n((p.a1 * p.t * p.t) / 2)} m</b>`) + `Mobilul cu accelerația mai mare parcurge mai mult, deci întâlnirea nu are loc la mijloc (${n(D / 2)} m).`],
+          ['Vitezele la întâlnire', eq(`${sub('v', 'A')} = ${n(p.a1)}·${n(p.t)} = <b>${n(p.a1 * p.t)} m/s</b>, &nbsp;&nbsp; ${sub('v', 'B')} = −${n(p.a2)}·${n(p.t)} = <b>${n(-p.a2 * p.t)} m/s</b>`) + `Semnul minus arată că mobilul din B se mișcă spre A.`],
+        ];
+      },
+      ans: (p) => {
+        const D = ((p.a1 + p.a2) * p.t * p.t) / 2;
+        return [
+          { l: sub('t', 'î'), u: 's', v: p.t, trap: [[p.t * p.t, `Ai uitat radicalul: ${n(p.t * p.t)} este ${'t'}<sup>2</sup>.`]] },
+          { l: sub('x', 'î'), u: 'm', v: (p.a1 * p.t * p.t) / 2, trap: [[D / 2, 'Mobilele nu se întâlnesc la mijloc: cel cu accelerația mai mare parcurge o distanță mai mare.'], [(p.a2 * p.t * p.t) / 2, 'Aceasta este distanța parcursă de mobilul din B. Se cere distanța față de A.']] },
+          { l: sub('v', 'A'), u: 'm/s', v: p.a1 * p.t },
+          { l: sub('v', 'B'), u: 'm/s', v: -p.a2 * p.t },
+        ];
+      },
+    },
   ];
+
+  // graficul v(t) pentru problema „între două semafoare” (cu aria hașurată în pasul cu distanța)
+  function vtFig(p, area) {
+    const T = p.t1 + p.t2 + p.t3, ys = p.V % 5 === 0 ? 5 : 4, pts = [[0, 0], [p.t1, p.V], [p.t1 + p.t2, p.V], [T, 0]];
+    const yMax = Math.ceil((p.V * 1.15) / ys) * ys;
+    return graph({
+      id: area ? 'gvt2' : 'gvt', aria: 'Graficul vitezei în funcție de timp', yTitle: 'v (m/s)', small: area, w: area ? 440 : 560, h: area ? 220 : 260,
+      tMax: T + 1, tStep: 1, yMin: 0, yMax, yStep: ys,
+      tLabels: [0, p.t1, p.t1 + p.t2, T], yLabels: Array.from({ length: yMax / ys + 1 }, (_, k) => k * ys),
+      guides: [[p.t1, p.V], [p.t1 + p.t2, p.V]],
+      area: area ? pts : null,
+      series: [{ cls: 's1', pts }],
+      points: area ? [] : pts.slice(1, 3).map(([x, y]) => [x, y, 's1']),
+      labels: area ? [[T / 2, p.V / 2, 'aria = <tspan font-style="italic">d</tspan>', 0, 4]] : [],
+    });
+  }
+
+  // ordinea din listă: întâi MRU, apoi MRUV, de la simplu la complex
+  const ORDER = ['vmed', 'lege', 'opuse', 'urmarire', 'jumatati', 'pod', 'grafic-xt',
+    'repaus', 'franare', 'grafic-vt', 'galilei', 'expertiza', 'decolare', 'secunda',
+    'vertical', 'doua-inaltimi', 'balcon', 'camion', 'intalnire-mruv', 'intoarcere'];
+  P.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 
   /* ---------- stare ---------- */
   let solved = {};
@@ -311,6 +572,7 @@
       </div>
       <h3 class="pb-title">${p.title}</h3>
       <p class="pb-text">${p.text(prm)}</p>
+      ${p.fig ? p.fig(prm) : ''}
       <div class="pb-given">
         <div><div class="pb-lbl">Se dă</div><table class="pb-data">${p.data(prm).map(([s, v]) => `<tr><td>${s}</td><td>=</td><td>${v}</td></tr>`).join('')}</table></div>
         <div><div class="pb-lbl">Se cere</div><ul class="pb-ask">${p.ask(prm).map((a) => `<li>${a} = ?</li>`).join('')}</ul></div>
