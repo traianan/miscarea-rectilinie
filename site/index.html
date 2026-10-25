@@ -1,96 +1,415 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenKBS Project</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            background: white;
-            padding: 3rem;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 500px;
-        }
-        h1 { color: #333; margin-bottom: 1rem; }
-        p { color: #666; margin-bottom: 2rem; line-height: 1.6; }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mișcarea rectilinie — laborator interactiv</title>
+  <meta name="description" content="Aplicație interactivă de fizică: tipuri de mișcări, mișcarea rectilinie uniformă și mișcarea rectilinie uniform variată, cu formule, simulări, grafice și sunete.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232c4a7a'/%3E%3Cpath d='M6 22h20' stroke='%23fbfaf6' stroke-width='2'/%3E%3Ccircle cx='20' cy='15' r='4' fill='%23eb6834'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script>try{var t=localStorage.getItem('mr-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
 </head>
 <body>
-    <div class="container">
-        <h1>OpenKBS Project</h1>
-        <p>Your project is ready. Start building — ask the chat for anything and watch it appear here.</p>
-        <a href="#" class="btn" onclick="testAPI()">Test API</a>
-        <pre id="result" style="margin-top: 2rem; text-align: left; background: #f5f5f5; padding: 1rem; border-radius: 8px; display: none;"></pre>
+
+<header class="top">
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+      <rect width="40" height="40" rx="9" fill="var(--accent)"/>
+      <path d="M7 28h26" stroke="var(--card)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="24" r="1.6" fill="var(--card)" opacity=".45"/>
+      <circle cx="17" cy="24" r="1.6" fill="var(--card)" opacity=".6"/>
+      <circle cx="23" cy="24" r="1.6" fill="var(--card)" opacity=".8"/>
+      <circle cx="30" cy="20" r="4" fill="var(--c-v)"/>
+    </svg>
+    <div>
+      <h1>Mișcarea rectilinie</h1>
+      <p>Laborator interactiv de cinematică</p>
     </div>
-    <script>
-        // The preview URL (p-*.…) serves static files only — the API lives on
-        // the production URL. Right after project creation the production
-        // environment needs a minute or two, so instead of surfacing a JSON
-        // parse error we explain and retry.
-        const IS_PREVIEW = /^p-[a-z0-9]+\./.test(location.hostname) || location.port === '6100';
-        let retryTimer = null;
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Secțiuni">
+    <button class="tab" role="tab" data-tab="tipuri" aria-selected="true"><span class="num">01</span>Tipuri de mișcări</button>
+    <button class="tab" role="tab" data-tab="mru" aria-selected="false"><span class="num">02</span>Mișcarea rectilinie</button>
+    <button class="tab" role="tab" data-tab="mruv" aria-selected="false"><span class="num">03</span>Mișcarea uniform variată</button>
+  </nav>
+  <div class="tools">
+    <button class="icon-btn" id="btn-sound" aria-pressed="true" title="Pornește / oprește sunetele">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7"/><path class="wave" d="M19 5a10 10 0 0 1 0 14"/><g class="mute" style="display:none"><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></g></svg>
+      <span>Sunet</span>
+    </button>
+    <button class="icon-btn" id="btn-theme" title="Temă de zi / de noapte">
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+</header>
 
-        async function testAPI() {
-            const result = document.getElementById('result');
-            result.style.display = 'block';
-            clearTimeout(retryTimer);
+<main>
 
-            if (IS_PREVIEW) {
-                result.textContent = '⏳ This is the preview URL — it serves your site\'s static files only.\n' +
-                    'The API runs on your production URL, which is set up automatically\n' +
-                    'right after project creation (usually ready within 1–2 minutes).';
-                return;
-            }
+<!-- ===================================================================== -->
+<!-- 01 — TIPURI DE MIȘCĂRI                                                 -->
+<!-- ===================================================================== -->
+<section class="panel" id="tipuri" role="tabpanel">
+  <div class="hero">
+    <span class="big-num">01</span>
+    <h2>Tipuri de mișcări</h2>
+    <p>Mișcarea mecanică este schimbarea poziției unui corp față de alte corpuri, alese ca <b>sistem de referință</b>, în decursul timpului. Mișcările se clasifică după <b>forma traiectoriei</b> și după <b>modul în care variază viteza</b>, adică după accelerație.</p>
+  </div>
 
-            result.textContent = 'Loading...';
-            try {
-                const response = await fetch('/api', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'hello', data: { test: true } })
-                });
-                const text = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch {
-                    // Got HTML back — the /api route isn't wired yet (production
-                    // environment still being set up). Retry until it is.
-                    result.textContent = '⏳ Setting up production environment… retrying automatically.';
-                    retryTimer = setTimeout(testAPI, 10000);
-                    return;
-                }
-                result.textContent = JSON.stringify(data, null, 2);
-            } catch (e) {
-                result.textContent = '⏳ API not reachable yet (' + e.message + ') — retrying automatically.';
-                retryTimer = setTimeout(testAPI, 10000);
-            }
-        }
-    </script>
+  <div class="block">
+    <div class="block-head"><h3>După forma traiectoriei</h3><span class="tag">TRAIECTORIA = LINIA DESCRISĂ DE CORP</span></div>
+    <div class="chips" id="traj-chips" style="margin-bottom:12px">
+      <button class="chip" data-k="rect" aria-pressed="true">Rectilinie</button>
+      <button class="chip" data-k="circ" aria-pressed="false">Circulară</button>
+      <button class="chip" data-k="parab" aria-pressed="false">Parabolică</button>
+      <button class="chip" data-k="elip" aria-pressed="false">Eliptică</button>
+      <button class="chip" data-k="oarecare" aria-pressed="false">Curbilinie oarecare</button>
+    </div>
+    <div class="card type-card">
+      <div class="stage">
+        <canvas class="traj" id="traj-canvas"></canvas>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="traj-vec" checked> Vectorul viteză (tangent la traiectorie)</label>
+          <label class="check"><input type="checkbox" id="traj-trail" checked> Urma (traiectoria)</label>
+          <label class="check"><input type="checkbox" id="traj-pause"> Pauză</label>
+        </div>
+      </div>
+      <div class="info" id="traj-info"></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>După accelerație</h3><span class="tag">CUM VARIAZĂ VITEZA ÎN TIMP</span><span class="hint">Urmele stroboscopice sunt lăsate la intervale egale de timp (0,5 s)</span></div>
+    <div class="chips" id="acc-chips" style="margin-bottom:12px">
+      <button class="chip" data-k="unif" aria-pressed="true">Uniformă</button>
+      <button class="chip" data-k="acc" aria-pressed="false">Uniform accelerată</button>
+      <button class="chip" data-k="inc" aria-pressed="false">Uniform încetinită</button>
+      <button class="chip" data-k="var" aria-pressed="false">Variată (neuniformă)</button>
+    </div>
+    <div class="card sim">
+      <div class="sim-side" id="acc-info"></div>
+      <div class="sim-main">
+        <div id="acc-transport"></div>
+        <canvas class="track" id="acc-track"></canvas>
+        <div class="grid-2">
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-v)"></span>Viteza <span class="note">v(t)</span></h4><canvas class="plot sm" id="acc-pv"></canvas></div>
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-a)"></span>Accelerația <span class="note">a(t)</span></h4><canvas class="plot sm" id="acc-pa"></canvas></div>
+        </div>
+        <div class="status" id="acc-status"><span class="dot"></span><span></span></div>
+        <label class="check"><input type="checkbox" id="acc-sound" checked> „Clic” la fiecare urmă stroboscopică</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Tabel recapitulativ</h3><span class="tag">MIȘCĂRI RECTILINII</span></div>
+    <div class="card" style="overflow-x:auto">
+      <table class="sum">
+        <thead><tr><th>Tipul mișcării</th><th>Viteza</th><th>Accelerația</th><th>Ecuația mișcării</th><th>v(t)</th><th>x(t)</th></tr></thead>
+        <tbody>
+          <tr><td><b>Rectilinie uniformă</b></td><td><span class="eq"><i>v</i> = const.</span></td><td><span class="eq"><i>a</i> = 0</span></td><td><span class="eq"><i>x</i> = <i>x</i><sub>0</sub> + <i>v</i>·<i>t</i></span></td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 14H78" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 26L78 6" stroke="var(--c-x)" stroke-width="2" fill="none"/></svg></td></tr>
+          <tr><td><b>Uniform accelerată</b><br><span class="small muted"><i class="v">a</i> și <i class="v">v</i> au același sens</span></td><td>crește uniform</td><td><span class="eq"><i>a</i> = const.</span></td><td><span class="eq"><i>x</i> = <i>x</i><sub>0</sub> + <i>v</i><sub>0</sub><i>t</i> + <span class="frac"><span><i>a</i><i>t</i><sup>2</sup></span><span>2</span></span></span></td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 24L78 6" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 28Q50 28 78 5" stroke="var(--c-x)" stroke-width="2" fill="none"/></svg></td></tr>
+          <tr><td><b>Uniform încetinită</b><br><span class="small muted"><i class="v">a</i> și <i class="v">v</i> au sensuri opuse</span></td><td>scade uniform</td><td><span class="eq"><i>a</i> = const.</span></td><td><span class="eq"><i>x</i> = <i>x</i><sub>0</sub> + <i>v</i><sub>0</sub><i>t</i> + <span class="frac"><span><i>a</i><i>t</i><sup>2</sup></span><span>2</span></span></span></td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 6L70 30" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 28Q40 4 78 5" stroke="var(--c-x)" stroke-width="2" fill="none"/></svg></td></tr>
+          <tr><td><b>Variată</b></td><td>variază oarecum</td><td><span class="eq"><i>a</i> ≠ const.</span></td><td class="muted small">fără o formulă unică</td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 20C20 4 32 4 42 16S64 28 78 8" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td>
+            <td><svg class="spark" viewBox="0 0 84 34"><path d="M4 30H80M4 4V30" stroke="var(--line-strong)" fill="none"/><path d="M6 28C26 18 40 20 50 16S70 10 78 4" stroke="var(--c-x)" stroke-width="2" fill="none"/></svg></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Verifică-te: clasifică mișcarea</h3><span class="tag">10 SITUAȚII</span><span class="hint">Pentru mișcările curbilinii, „uniformă” înseamnă că mărimea vitezei e constantă</span></div>
+    <div class="card pad" id="quiz">
+      <div class="progress"><span id="quiz-bar" style="width:0%"></span></div>
+      <div class="muted small" id="quiz-count"></div>
+      <div class="quiz-q" id="quiz-q"></div>
+      <div class="quiz-row"><span class="lbl">Traiectoria</span><div class="chips" id="quiz-traj">
+        <button class="chip" data-k="rect" aria-pressed="false">Rectilinie</button>
+        <button class="chip" data-k="curb" aria-pressed="false">Curbilinie</button></div></div>
+      <div class="quiz-row"><span class="lbl">Viteza</span><div class="chips" id="quiz-acc">
+        <button class="chip" data-k="unif" aria-pressed="false">Uniformă</button>
+        <button class="chip" data-k="acc" aria-pressed="false">Uniform accelerată</button>
+        <button class="chip" data-k="inc" aria-pressed="false">Uniform încetinită</button>
+        <button class="chip" data-k="var" aria-pressed="false">Variată</button></div></div>
+      <div class="status" id="quiz-fb" style="display:none"><span class="dot"></span><span></span></div>
+      <div class="quiz-foot">
+        <button class="btn primary" id="quiz-check">Verifică</button>
+        <button class="btn" id="quiz-next" style="display:none">Următoarea</button>
+        <button class="btn" id="quiz-restart">Ia-o de la capăt</button>
+        <span class="score" id="quiz-score">Scor: 0 / 0</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- 02 — MIȘCAREA RECTILINIE                                              -->
+<!-- ===================================================================== -->
+<section class="panel" id="mru" role="tabpanel" hidden>
+  <div class="hero">
+    <span class="big-num">02</span>
+    <h2>Mișcarea rectilinie</h2>
+    <p>Traiectoria este o dreaptă, deci poziția corpului se descrie printr-o singură coordonată <i class="v">x</i>, măsurată pe axa <i class="v">Ox</i> față de originea O. Semnul lui <i class="v">x</i> arată de ce parte a originii se află corpul, iar semnul vitezei arată sensul deplasării.</p>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Poziție, deplasare, viteză medie</h3><span class="tag">MĂRIMI DE BAZĂ</span></div>
+    <div class="card sim">
+      <div class="sim-side" id="dep-ctl">
+        <div class="group-title"><span class="sw" style="background:var(--c-x)"></span>Momentul 1</div>
+        <label class="ctl x"><span class="ctl-name"><span class="eq"><i>x</i><sub>1</sub></span> poziția (m)</span><input type="number"><input type="range" id="d-x1" min="-100" max="100" step="1" value="-40"></label>
+        <label class="ctl"><span class="ctl-name"><span class="eq"><i>t</i><sub>1</sub></span> momentul (s)</span><input type="number"><input type="range" id="d-t1" min="0" max="20" step="0.5" value="2"></label>
+        <div class="group-title"><span class="sw" style="background:var(--c-b)"></span>Momentul 2</div>
+        <label class="ctl b"><span class="ctl-name"><span class="eq"><i>x</i><sub>2</sub></span> poziția (m)</span><input type="number"><input type="range" id="d-x2" min="-100" max="100" step="1" value="50"></label>
+        <label class="ctl"><span class="ctl-name"><span class="eq"><i>t</i><sub>2</sub></span> momentul (s)</span><input type="number"><input type="range" id="d-t2" min="0" max="20" step="0.5" value="8"></label>
+      </div>
+      <div class="sim-main">
+        <canvas class="track" id="dep-track"></canvas>
+        <div class="grid-3">
+          <div class="formula x"><span class="eq">Δ<i>x</i> = <i>x</i><sub>2</sub> − <i>x</i><sub>1</sub></span><span class="what">deplasarea</span><span class="eq" id="dep-dx" style="grid-column:1/-1;font-size:1rem"></span></div>
+          <div class="formula"><span class="eq">Δ<i>t</i> = <i>t</i><sub>2</sub> − <i>t</i><sub>1</sub></span><span class="what">durata</span><span class="eq" id="dep-dt" style="grid-column:1/-1;font-size:1rem"></span></div>
+          <div class="formula v"><span class="eq"><i>v</i><sub>m</sub> = <span class="frac"><span>Δ<i>x</i></span><span>Δ<i>t</i></span></span></span><span class="what">viteza medie</span><span class="eq" id="dep-vm" style="grid-column:1/-1;font-size:1rem"></span></div>
+        </div>
+        <div class="status" id="dep-status"><span class="dot"></span><span></span></div>
+        <p class="small muted" style="margin:0">Deplasarea Δ<i class="v">x</i> e o mărime cu semn: pozitivă când corpul ajunge mai departe în sensul axei, negativă în sens contrar. Distanța parcursă e întotdeauna pozitivă. Unitatea de măsură a vitezei în SI este m/s; 1 m/s = 3,6 km/h.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Convertor de unități pentru viteză</h3></div>
+    <div class="card pad" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+      <div class="calc-field" style="min-width:180px"><label for="conv-ms">m/s</label><input type="number" id="conv-ms" value="10" step="0.1"></div>
+      <span class="eq">× 3,6 →<br>← : 3,6</span>
+      <div class="calc-field" style="min-width:180px"><label for="conv-kmh">km/h</label><input type="number" id="conv-kmh" value="36" step="0.1"></div>
+      <p class="small muted" style="margin:0;max-width:46ch">1 km/h = <span class="frac"><span>1000 m</span><span>3600 s</span></span> = <span class="frac"><span>1</span><span>3,6</span></span> m/s. Exemple: pieton ≈ 1,4 m/s, biciclist ≈ 5 m/s, automobil pe autostradă ≈ 36 m/s (130 km/h).</p>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Mișcarea rectilinie uniformă</h3><span class="tag">v = CONST. · a = 0</span></div>
+    <div class="def"><p>Mișcarea rectilinie uniformă este mișcarea pe o dreaptă în care corpul parcurge <b>distanțe egale în intervale de timp egale</b>, oricât de mici. Viteza este constantă, iar accelerația este nulă.</p></div>
+    <div class="grid-3" style="margin-bottom:14px">
+      <div class="formula x"><span class="eq"><i>x</i> = <i>x</i><sub>0</sub> + <i>v</i>·(<i>t</i> − <i>t</i><sub>0</sub>)</span><span class="what">legea mișcării</span></div>
+      <div class="formula v"><span class="eq"><i>v</i> = <span class="frac"><span>Δ<i>x</i></span><span>Δ<i>t</i></span></span> = const.</span><span class="what">viteza</span></div>
+      <div class="formula"><span class="eq"><i>d</i> = |<i>v</i>|·Δ<i>t</i></span><span class="what">distanța parcursă</span></div>
+    </div>
+    <div class="card sim">
+      <div class="sim-side" id="mru-ctl">
+        <div class="group-title">Cazuri posibile</div>
+        <div class="chips" id="mru-presets">
+          <button class="chip" data-p="pos">v &gt; 0</button>
+          <button class="chip" data-p="neg">v &lt; 0</button>
+          <button class="chip" data-p="zero">v = 0 (repaus)</button>
+          <button class="chip" data-p="orig">pornește din O</button>
+        </div>
+        <div class="group-title">Parametri (considerăm t₀ = 0)</div>
+        <label class="ctl x"><span class="ctl-name"><span class="eq"><i>x</i><sub>0</sub></span> poziția inițială (m)</span><input type="number"><input type="range" id="mru-x0" min="-100" max="100" step="1" value="-60"></label>
+        <label class="ctl v"><span class="ctl-name"><span class="eq"><i>v</i></span> viteza (m/s)</span><input type="number"><input type="range" id="mru-v" min="-20" max="20" step="0.5" value="8"></label>
+        <label class="ctl"><span class="ctl-name"><span class="eq"><i>T</i></span> durata observației (s)</span><input type="number"><input type="range" id="mru-T" min="4" max="30" step="1" value="12"></label>
+        <div class="group-title">Afișare și sunete</div>
+        <div class="checks" style="flex-direction:column">
+          <label class="check"><input type="checkbox" id="mru-strobe" checked> Urme la fiecare secundă</label>
+          <label class="check"><input type="checkbox" id="mru-vec" checked> Vectorul viteză</label>
+          <label class="check"><input type="checkbox" id="mru-tick"> „Tic” la fiecare secundă</label>
+        </div>
+      </div>
+      <div class="sim-main">
+        <div id="mru-transport"></div>
+        <canvas class="track" id="mru-track"></canvas>
+        <div class="live-eq" id="mru-eq"></div>
+        <div class="readouts">
+          <div class="ro"><span class="k">timpul <span class="eq"><i>t</i></span></span><span class="val" id="mru-rt"></span></div>
+          <div class="ro x"><span class="k">poziția <span class="eq"><i>x</i></span></span><span class="val" id="mru-rx"></span></div>
+          <div class="ro v"><span class="k">viteza <span class="eq"><i>v</i></span></span><span class="val" id="mru-rv"></span></div>
+          <div class="ro"><span class="k">deplasarea <span class="eq">Δ<i>x</i></span></span><span class="val" id="mru-rdx"></span></div>
+          <div class="ro"><span class="k">distanța <span class="eq"><i>d</i></span></span><span class="val" id="mru-rd"></span></div>
+        </div>
+        <div class="grid-2">
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-x)"></span>Legea mișcării <span class="note">x(t) — o dreaptă cu panta v</span></h4><canvas class="plot" id="mru-px"></canvas></div>
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-v)"></span>Viteza <span class="note">aria hașurată = Δx</span></h4><canvas class="plot" id="mru-pv"></canvas></div>
+        </div>
+        <div class="status" id="mru-status"><span class="dot"></span><span></span></div>
+        <ul class="log" id="mru-log"></ul>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:8px">Indiciu: apasă sau trage pe un grafic pentru a muta momentul de timp.</p>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Întâlnirea a două mobile</h3><span class="tag">x<sub>A</sub>(t) = x<sub>B</sub>(t)</span></div>
+    <div class="card sim">
+      <div class="sim-side" id="met-ctl">
+        <div class="group-title">Situații</div>
+        <div class="chips" id="met-presets">
+          <button class="chip" data-p="opus">din sensuri opuse</button>
+          <button class="chip" data-p="ajunge">A ajunge din urmă pe B</button>
+          <button class="chip" data-p="departe">se depărtează</button>
+          <button class="chip" data-p="paralel">viteze egale</button>
+        </div>
+        <div class="group-title"><span class="sw" style="background:var(--c-x)"></span>Mobilul A</div>
+        <label class="ctl x"><span class="ctl-name"><span class="eq"><i>x</i><sub>0A</sub></span> (m)</span><input type="number"><input type="range" id="met-xa" min="-100" max="100" step="1" value="-80"></label>
+        <label class="ctl x"><span class="ctl-name"><span class="eq"><i>v</i><sub>A</sub></span> (m/s)</span><input type="number"><input type="range" id="met-va" min="-20" max="20" step="0.5" value="10"></label>
+        <div class="group-title"><span class="sw" style="background:var(--c-b)"></span>Mobilul B</div>
+        <label class="ctl b"><span class="ctl-name"><span class="eq"><i>x</i><sub>0B</sub></span> (m)</span><input type="number"><input type="range" id="met-xb" min="-100" max="100" step="1" value="70"></label>
+        <label class="ctl b"><span class="ctl-name"><span class="eq"><i>v</i><sub>B</sub></span> (m/s)</span><input type="number"><input type="range" id="met-vb" min="-20" max="20" step="0.5" value="-5"></label>
+      </div>
+      <div class="sim-main">
+        <div id="met-transport"></div>
+        <canvas class="track two" id="met-track"></canvas>
+        <div class="grid-2">
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-x)"></span>A <span class="sw" style="background:var(--c-b)"></span>B <span class="note">x(t) — întâlnirea = intersecția dreptelor</span></h4><canvas class="plot" id="met-px"></canvas></div>
+          <div class="card pad" style="box-shadow:none">
+            <div class="group-title" style="margin-bottom:8px">Rezolvare</div>
+            <div class="steps" id="met-sol"></div>
+          </div>
+        </div>
+        <div class="status" id="met-status"><span class="dot"></span><span></span></div>
+        <ul class="log" id="met-log"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- 03 — MIȘCAREA RECTILINIE UNIFORM VARIATĂ                              -->
+<!-- ===================================================================== -->
+<section class="panel" id="mruv" role="tabpanel" hidden>
+  <div class="hero">
+    <span class="big-num">03</span>
+    <h2>Mișcarea rectilinie uniform variată</h2>
+    <p>Corpul se mișcă pe o dreaptă, iar viteza lui variază cu cantități egale în intervale de timp egale: <b>accelerația este constantă</b> și diferită de zero. Dacă viteza și accelerația au același sens, mișcarea este <b>accelerată</b>; dacă au sensuri opuse, este <b>încetinită</b>.</p>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Formule</h3><span class="tag">a = CONST. ≠ 0 · t₀ = 0</span></div>
+    <div class="grid-3">
+      <div class="formula a"><span class="eq"><i>a</i> = <span class="frac"><span>Δ<i>v</i></span><span>Δ<i>t</i></span></span> = const.</span><span class="what">accelerația · m/s²</span></div>
+      <div class="formula v"><span class="eq"><i>v</i> = <i>v</i><sub>0</sub> + <i>a</i>·<i>t</i></span><span class="what">legea vitezei</span></div>
+      <div class="formula x"><span class="eq"><i>x</i> = <i>x</i><sub>0</sub> + <i>v</i><sub>0</sub><i>t</i> + <span class="frac"><span><i>a</i><i>t</i><sup>2</sup></span><span>2</span></span></span><span class="what">legea mișcării</span></div>
+      <div class="formula"><span class="eq"><i>v</i><sup>2</sup> = <i>v</i><sub>0</sub><sup>2</sup> + 2<i>a</i>·Δ<i>x</i></span><span class="what">ecuația lui Galilei</span></div>
+      <div class="formula"><span class="eq"><i>v</i><sub>m</sub> = <span class="frac"><span><i>v</i><sub>0</sub> + <i>v</i></span><span>2</span></span></span><span class="what">viteza medie</span></div>
+      <div class="formula"><span class="eq"><i>t</i><sub>opr</sub> = −<span class="frac"><span><i>v</i><sub>0</sub></span><span><i>a</i></span></span>,&nbsp; <i>d</i><sub>opr</sub> = <span class="frac"><span><i>v</i><sub>0</sub><sup>2</sup></span><span>2|<i>a</i>|</span></span></span><span class="what">oprirea (mișcare încetinită)</span></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Simulator</h3><span class="tag">TOATE CAZURILE</span></div>
+    <div class="card sim">
+      <div class="sim-side" id="uv-ctl">
+        <div class="group-title">Exemple</div>
+        <div class="chips" id="uv-presets">
+          <button class="chip" data-p="repaus">pornire din repaus</button>
+          <button class="chip" data-p="acc">accelerată</button>
+          <button class="chip" data-p="frana">frânare</button>
+          <button class="chip" data-p="intoarce">încetinită, apoi se întoarce</button>
+          <button class="chip" data-p="negacc">accelerată, sens negativ</button>
+          <button class="chip" data-p="neginc">încetinită, sens negativ</button>
+          <button class="chip" data-p="vertical">aruncare în sus (a = −g)</button>
+        </div>
+        <div class="group-title">Parametri</div>
+        <label class="ctl x"><span class="ctl-name"><span class="eq"><i>x</i><sub>0</sub></span> poziția inițială (m)</span><input type="number"><input type="range" id="uv-x0" min="-100" max="100" step="1" value="-40"></label>
+        <label class="ctl v"><span class="ctl-name"><span class="eq"><i>v</i><sub>0</sub></span> viteza inițială (m/s)</span><input type="number"><input type="range" id="uv-v0" min="-30" max="30" step="0.5" value="12"></label>
+        <label class="ctl a"><span class="ctl-name"><span class="eq"><i>a</i></span> accelerația (m/s²)</span><input type="number"><input type="range" id="uv-a" min="-10" max="10" step="0.1" value="-2"></label>
+        <label class="ctl"><span class="ctl-name"><span class="eq"><i>T</i></span> durata observației (s)</span><input type="number"><input type="range" id="uv-T" min="2" max="20" step="0.5" value="10"></label>
+        <div class="group-title">Opțiuni</div>
+        <div class="checks" style="flex-direction:column">
+          <label class="check"><input type="checkbox" id="uv-brake"> Frânare: corpul rămâne oprit când <i class="v">v</i> = 0</label>
+          <label class="check"><input type="checkbox" id="uv-vec" checked> Vectorii <i class="v">v</i> și <i class="v">a</i></label>
+          <label class="check"><input type="checkbox" id="uv-strobe" checked> Urme la fiecare secundă</label>
+          <label class="check"><input type="checkbox" id="uv-tick"> „Tic” la fiecare secundă</label>
+        </div>
+      </div>
+      <div class="sim-main">
+        <div id="uv-transport"></div>
+        <canvas class="track" id="uv-track"></canvas>
+        <div class="status" id="uv-case"><span class="dot"></span><span></span></div>
+        <div class="readouts">
+          <div class="ro"><span class="k">timpul <span class="eq"><i>t</i></span></span><span class="val" id="uv-rt"></span></div>
+          <div class="ro x"><span class="k">poziția <span class="eq"><i>x</i></span></span><span class="val" id="uv-rx"></span></div>
+          <div class="ro v"><span class="k">viteza <span class="eq"><i>v</i></span></span><span class="val" id="uv-rv"></span></div>
+          <div class="ro a"><span class="k">accelerația <span class="eq"><i>a</i></span></span><span class="val" id="uv-ra"></span></div>
+          <div class="ro"><span class="k">deplasarea <span class="eq">Δ<i>x</i></span></span><span class="val" id="uv-rdx"></span></div>
+          <div class="ro"><span class="k">distanța <span class="eq"><i>d</i></span></span><span class="val" id="uv-rd"></span></div>
+        </div>
+        <div class="live-eq" id="uv-eq"></div>
+        <div class="grid-3">
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-x)"></span>Poziția <span class="note">x(t) — parabolă</span></h4><canvas class="plot sm" id="uv-px"></canvas></div>
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-v)"></span>Viteza <span class="note">aria = Δx</span></h4><canvas class="plot sm" id="uv-pv"></canvas></div>
+          <div class="plot-card"><h4><span class="sw" style="background:var(--c-a)"></span>Accelerația <span class="note">aria = Δv</span></h4><canvas class="plot sm" id="uv-pa"></canvas></div>
+        </div>
+        <div class="status" id="uv-phase"><span class="dot"></span><span></span></div>
+        <ul class="log" id="uv-log"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Toate cazurile posibile</h3><span class="tag">SEMNUL LUI v₀ ȘI AL LUI a</span><span class="hint">Apasă „Vezi” ca să încarci cazul în simulator</span></div>
+    <div class="card" style="overflow-x:auto">
+      <table class="sum" id="uv-cases">
+        <thead><tr><th>v₀</th><th>a</th><th>Ce se întâmplă</th><th>Graficul v(t)</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="eq"><i>v</i><sub>0</sub> = 0</span></td><td><span class="eq"><i>a</i> &gt; 0</span></td><td>Pornește din repaus în sensul pozitiv, accelerat.</td><td><svg class="spark" viewBox="0 0 84 34"><path d="M4 17H80M4 2V32" stroke="var(--line-strong)" fill="none"/><path d="M6 17L78 4" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td><td><button class="btn" data-case="0,0,2">Vezi</button></td></tr>
+          <tr><td><span class="eq"><i>v</i><sub>0</sub> = 0</span></td><td><span class="eq"><i>a</i> &lt; 0</span></td><td>Pornește din repaus în sensul negativ, accelerat.</td><td><svg class="spark" viewBox="0 0 84 34"><path d="M4 17H80M4 2V32" stroke="var(--line-strong)" fill="none"/><path d="M6 17L78 30" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td><td><button class="btn" data-case="0,0,-2">Vezi</button></td></tr>
+          <tr><td><span class="eq"><i>v</i><sub>0</sub> &gt; 0</span></td><td><span class="eq"><i>a</i> &gt; 0</span></td><td>Accelerată în sensul pozitiv: viteza crește continuu.</td><td><svg class="spark" viewBox="0 0 84 34"><path d="M4 17H80M4 2V32" stroke="var(--line-strong)" fill="none"/><path d="M6 12L78 3" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td><td><button class="btn" data-case="-80,5,1.5">Vezi</button></td></tr>
+          <tr><td><span class="eq"><i>v</i><sub>0</sub> &lt; 0</span></td><td><span class="eq"><i>a</i> &lt; 0</span></td><td>Accelerată în sensul negativ: modulul vitezei crește.</td><td><svg class="spark" viewBox="0 0 84 34"><path d="M4 17H80M4 2V32" stroke="var(--line-strong)" fill="none"/><path d="M6 22L78 31" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td><td><button class="btn" data-case="80,-5,-1.5">Vezi</button></td></tr>
+          <tr><td><span class="eq"><i>v</i><sub>0</sub> &gt; 0</span></td><td><span class="eq"><i>a</i> &lt; 0</span></td><td>Încetinită până la oprire (<i class="v">t</i><sub>opr</sub> = −<i class="v">v</i><sub>0</sub>/<i class="v">a</i>), apoi accelerată în sens negativ.</td><td><svg class="spark" viewBox="0 0 84 34"><path d="M4 17H80M4 2V32" stroke="var(--line-strong)" fill="none"/><path d="M6 4L78 30" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td><td><button class="btn" data-case="-60,16,-3">Vezi</button></td></tr>
+          <tr><td><span class="eq"><i>v</i><sub>0</sub> &lt; 0</span></td><td><span class="eq"><i>a</i> &gt; 0</span></td><td>Încetinită în sensul negativ, se oprește, apoi accelerată în sens pozitiv.</td><td><svg class="spark" viewBox="0 0 84 34"><path d="M4 17H80M4 2V32" stroke="var(--line-strong)" fill="none"/><path d="M6 30L78 4" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td><td><button class="btn" data-case="60,-16,3">Vezi</button></td></tr>
+          <tr><td><span class="eq"><i>v</i><sub>0</sub> ≠ 0</span></td><td><span class="eq"><i>a</i> = 0</span></td><td>Caz limită: mișcare rectilinie uniformă (secțiunea 02).</td><td><svg class="spark" viewBox="0 0 84 34"><path d="M4 17H80M4 2V32" stroke="var(--line-strong)" fill="none"/><path d="M6 9H78" stroke="var(--c-v)" stroke-width="2" fill="none"/></svg></td><td><button class="btn" data-case="-60,8,0">Vezi</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><h3>Calculator: ecuația lui Galilei</h3><span class="tag">v² = v₀² + 2a·Δx</span><span class="hint">Alege necunoscuta, completează celelalte valori</span></div>
+    <div class="card pad" id="gal">
+      <div class="chips" id="gal-unk">
+        <button class="chip" data-k="v" aria-pressed="true">Necunoscuta: v</button>
+        <button class="chip" data-k="v0" aria-pressed="false">v₀</button>
+        <button class="chip" data-k="a" aria-pressed="false">a</button>
+        <button class="chip" data-k="dx" aria-pressed="false">Δx</button>
+      </div>
+      <div class="calc-grid">
+        <div class="calc-field" data-f="v0"><label>viteza inițială <i class="v">v</i><sub>0</sub> (m/s)</label><input type="number" id="gal-v0" value="20" step="0.1"></div>
+        <div class="calc-field" data-f="v"><label>viteza finală <i class="v">v</i> (m/s)</label><input type="number" id="gal-v" value="0" step="0.1"></div>
+        <div class="calc-field" data-f="a"><label>accelerația <i class="v">a</i> (m/s²)</label><input type="number" id="gal-a" value="-4" step="0.1"></div>
+        <div class="calc-field" data-f="dx"><label>deplasarea Δ<i class="v">x</i> (m)</label><input type="number" id="gal-dx" value="30" step="0.1"></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+        <button class="btn primary" id="gal-go">Calculează</button>
+        <span class="small muted">Exemplu: un automobil cu 72 km/h (20 m/s) frânează cu 4 m/s². Ce distanță parcurge până la oprire?</span>
+      </div>
+      <div class="steps" id="gal-out"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span>Mișcarea rectilinie · laborator interactiv de fizică</span>
+  <span class="sp"></span>
+  <span class="small">Funcționează și fără internet: descarcă arhiva, dezarhiveaz-o și deschide <b>index.html</b>.</span>
+  <a class="btn" href="miscarea-rectilinie-offline.zip" download>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Versiunea offline (.zip)
+  </a>
+</footer>
+
+<script src="js/core.js"></script>
+<script src="js/plot.js"></script>
+<script src="js/track.js"></script>
+<script src="js/sec1-tipuri.js"></script>
+<script src="js/sec2-mru.js"></script>
+<script src="js/sec3-mruv.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
