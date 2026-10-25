@@ -2,7 +2,7 @@
 
 Aplicație web pentru elevi despre mișcarea rectilinie: tipuri de mișcări, mișcarea rectilinie uniformă (MRU) și mișcarea rectilinie uniform variată (MRUV), cu formule, simulări, grafice și sunete.
 
-**Demo:** https://d3d5m6igdl3grp.cloudfront.net
+**Demo:** https://traianan.github.io/miscarea-rectilinie/ (GitHub Pages) · https://d3d5m6igdl3grp.cloudfront.net
 
 ## Ce conține
 
@@ -25,6 +25,15 @@ python3 -m http.server 8000
 ```
 
 Merge și fără internet: descarcă `site/miscarea-rectilinie-offline.zip`, dezarhivează și deschide `index.html`.
+
+## Publicare pe GitHub Pages
+
+Site-ul este servit din ramura `gh-pages`, care conține doar folderul `site/`. După ce faci commit la modificări:
+
+```bash
+git push
+git subtree push --prefix site origin gh-pages
+```
 
 ## Structură
 
