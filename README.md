@@ -28,12 +28,7 @@ Merge și fără internet: descarcă `site/miscarea-rectilinie-offline.zip`, dez
 
 ## Publicare pe GitHub Pages
 
-Site-ul este servit din ramura `gh-pages`, care conține doar folderul `site/`. După ce faci commit la modificări:
-
-```bash
-git push
-git subtree push --prefix site origin gh-pages
-```
+La fiecare `git push` pe `master` care modifică folderul `site/`, workflow-ul `.github/workflows/pages.yml` publică automat site-ul pe GitHub Pages. Progresul se vede în tab-ul **Actions**. Workflow-ul poate fi pornit și manual de acolo, cu **Run workflow**.
 
 ## Structură
 
