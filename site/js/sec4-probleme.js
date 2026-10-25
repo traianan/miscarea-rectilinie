@@ -542,6 +542,24 @@
   const CAT = { mru: 'MRU', mruv: 'MRUV' };
   const LVL = ['', 'ușoară', 'medie', 'dificilă'];
 
+  /* piese de HTML folosite și de modul Test (sec4-test.js) */
+  const headHTML = (p, label) => `<span class="pb-badge ${p.cat}">${CAT[p.cat]}</span>
+        <span class="pb-lvl" title="Nivel: ${LVL[p.lvl]}">${'<i class="on"></i>'.repeat(p.lvl)}${'<i></i>'.repeat(3 - p.lvl)}</span>
+        <span class="muted small">${label}</span>`;
+  const bodyHTML = (p, q) => `<h3 class="pb-title">${p.title}</h3>
+      <p class="pb-text">${p.text(q)}</p>
+      ${p.fig ? p.fig(q) : ''}
+      <div class="pb-given">
+        <div><div class="pb-lbl">Se dă</div><table class="pb-data">${p.data(q).map(([s, v]) => `<tr><td>${s}</td><td>=</td><td>${v}</td></tr>`).join('')}</table></div>
+        <div><div class="pb-lbl">Se cere</div><ul class="pb-ask">${p.ask(q).map((a) => `<li>${a} = ?</li>`).join('')}</ul></div>
+      </div>`;
+  const answersHTML = (an, vals) => `<div class="pb-answers">${an.map((a, k) => `
+        <label class="pb-ans" data-k="${k}"><span class="pb-al">${a.l} =</span>
+          <input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?" value="${vals ? (vals[k] || '').replace(/"/g, '') : ''}">
+          <span class="pb-u">${a.u}</span><span class="pb-mark"></span></label>`).join('')}
+      </div>`;
+  const stepsHTML = (st, hidden) => `<ol class="pb-steps">${st.map(([t, h]) => `<li${hidden ? ' hidden' : ''}><div class="pb-st">${t}</div><div class="pb-sb">${h}</div></li>`).join('')}</ol>`;
+
   function renderList() {
     list.innerHTML = visible().map((i) => {
       const p = P[i];
@@ -564,26 +582,14 @@
     shown = 0;
     card.innerHTML = `
       <div class="pb-head">
-        <span class="pb-badge ${p.cat}">${CAT[p.cat]}</span>
-        <span class="pb-lvl" title="Nivel: ${LVL[p.lvl]}">${'<i class="on"></i>'.repeat(p.lvl)}${'<i></i>'.repeat(3 - p.lvl)}</span>
-        <span class="muted small">Problema ${cur + 1} din ${P.length}</span>
+        ${headHTML(p, `Problema ${cur + 1} din ${P.length}`)}
         <button class="btn sm" id="pb-new" title="Aceeași problemă, cu alte valori numerice">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Alte valori</button>
       </div>
-      <h3 class="pb-title">${p.title}</h3>
-      <p class="pb-text">${p.text(prm)}</p>
-      ${p.fig ? p.fig(prm) : ''}
-      <div class="pb-given">
-        <div><div class="pb-lbl">Se dă</div><table class="pb-data">${p.data(prm).map(([s, v]) => `<tr><td>${s}</td><td>=</td><td>${v}</td></tr>`).join('')}</table></div>
-        <div><div class="pb-lbl">Se cere</div><ul class="pb-ask">${p.ask(prm).map((a) => `<li>${a} = ?</li>`).join('')}</ul></div>
-      </div>
+      ${bodyHTML(p, prm)}
 
       <div class="pb-lbl">Răspunsul tău</div>
-      <div class="pb-answers">${an.map((a, k) => `
-        <label class="pb-ans" data-k="${k}"><span class="pb-al">${a.l} =</span>
-          <input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="?">
-          <span class="pb-u">${a.u}</span><span class="pb-mark"></span></label>`).join('')}
-      </div>
+      ${answersHTML(an)}
       <div class="pb-actions">
         <button class="btn primary" id="pb-check">Verifică</button>
         <span class="small muted">Poți scrie cu virgulă sau cu punct (ex: 12,5). Se acceptă rezultate rotunjite (abatere de cel mult 1,5%).</span>
@@ -598,7 +604,7 @@
         <button class="btn" id="pb-all">Arată tot</button>
         <button class="btn" id="pb-hide" hidden>Ascunde</button>
       </div>
-      <ol class="pb-steps">${st.map(([t, h]) => `<li hidden><div class="pb-st">${t}</div><div class="pb-sb">${h}</div></li>`).join('')}</ol>
+      ${stepsHTML(st, true)}
       <p class="pb-empty muted small" id="pb-empty">Încearcă întâi singur. Dacă te blochezi, dezvăluie rezolvarea pas cu pas.</p>
 
       <div class="pb-nav">
@@ -711,5 +717,9 @@
 
   go(0);
   MR.problems = P;
+  MR.pb = {
+    P, CAT, LVL, n, parse, near, headHTML, bodyHTML, answersHTML, stepsHTML,
+    markSolved(id) { if (!solved[id]) { solved[id] = 1; save(); renderList(); } },
+  };
   MR.sections.probleme = { show() {}, hide() {} };
 })();

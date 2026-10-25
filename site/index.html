@@ -400,10 +400,17 @@
   <div class="hero">
     <span class="big-num">04</span>
     <h2>Probleme rezolvate</h2>
-    <p>Citește enunțul, notează datele și încearcă să rezolvi singur. Scrie rezultatul și apasă <b>Verifică</b>. Dacă te blochezi, dezvăluie rezolvarea <b>pas cu pas</b>. Cu <b>Alte valori</b> primești aceeași problemă cu alte numere, ca să exersezi din nou.</p>
+    <p>Citește enunțul, notează datele și încearcă să rezolvi singur. Scrie rezultatul și apasă <b>Verifică</b>. Dacă te blochezi, dezvăluie rezolvarea <b>pas cu pas</b>. Cu <b>Alte valori</b> primești aceeași problemă cu alte numere. Când te simți pregătit, încearcă <b>modul Test</b>.</p>
   </div>
 
-  <div class="pb-layout">
+  <div class="pb-modes" id="pb-mode" role="group" aria-label="Mod de lucru">
+    <button class="chip" data-k="ex" aria-pressed="true">Exersare</button>
+    <button class="chip" data-k="test" aria-pressed="false">Mod test · notă 1–10</button>
+  </div>
+
+  <article class="card pad pb-test" id="pb-test" hidden></article>
+
+  <div class="pb-layout" id="pb-practice">
     <aside class="card pb-side">
       <div class="chips" id="pb-filter">
         <button class="chip" data-k="toate" aria-pressed="true">Toate</button>
@@ -439,6 +446,7 @@
 <script src="js/sec2-mru.js"></script>
 <script src="js/sec3-mruv.js"></script>
 <script src="js/sec4-probleme.js"></script>
+<script src="js/sec4-test.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
