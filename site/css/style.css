@@ -515,6 +515,19 @@ footer .sp { margin-left: auto; }
 .pt-hn.bad { color: var(--bad); }
 .pt-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
 .pt-bar .sp { flex: 1; }
+.pt-bar { position: relative; }
+.pt-tbar { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 2px; overflow: hidden; }
+.pt-tbar i { display: block; height: 100%; width: 100%; background: var(--accent); border-radius: 2px; transition: width 1s linear, background .3s; }
+.pt-clock.low { color: var(--c-v); }
+.pt-clock.low svg { color: var(--c-v); }
+.pt-bar:has(.pt-clock.low) .pt-tbar i { background: var(--c-v); }
+.pt-clock.crit { color: var(--bad); font-weight: 600; animation: pt-pulse 1s ease-in-out infinite; }
+.pt-clock.crit svg { color: var(--bad); }
+.pt-bar:has(.pt-clock.crit) .pt-tbar i { background: var(--bad); }
+@keyframes pt-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .pt-clock.crit { animation: none; } .pt-tbar i { transition: none; } }
+.pt-timeup { margin-bottom: 18px; }
+.pt-hist small { margin-left: 2px; font-size: .78em; opacity: .8; }
 .pt-dots { display: flex; gap: 6px; }
 .pt-dot { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line-strong); background: var(--card); font-family: var(--f-mono); font-size: .85rem; color: var(--ink-2); cursor: pointer; }
 .pt-dot.part { border-color: var(--accent); background: linear-gradient(to top, var(--accent-soft) 50%, var(--card) 50%); }
