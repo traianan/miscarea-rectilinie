@@ -1,7 +1,7 @@
 /* Navigare între secțiuni, sunet, temă. */
 (function () {
   const MR = window.MR, $ = MR.$, $$ = MR.$$;
-  const TABS = ['tipuri', 'mru', 'mruv'];
+  const TABS = ['tipuri', 'mru', 'mruv', 'probleme'];
   let current = null;
 
   function show(name) {
